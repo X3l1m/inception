@@ -1,52 +1,61 @@
 NAME = inception
 CURRENT_DIR := $(shell pwd)
-HOSTS_FILE := /etc/hosts
-DOMAIN := seyildir.42.fr
+DATA_PATH := $(CURRENT_DIR)/srcs/data
 
-all: hosts up
+all: prepare up
 
-hosts:
-	@if ! grep -q "$(DOMAIN)" /etc/hosts; then \
-		echo "\033[33mSudo may be required to add: echo '127.0.0.1 $(DOMAIN)' >> /etc/hosts\033[0m"; \
-	else \
-		echo "\033[32m$(DOMAIN) found in hosts file\033[0m"; \
-	fi
+prepare:
+	@mkdir -p $(DATA_PATH)/wordpress
+	@mkdir -p $(DATA_PATH)/mariadb
+	@sudo echo "127.0.0.1 seyildir.42.fr" >> /etc/hosts || true
+
+clean_volumes:
+	@echo "Cleaning volumes..."
+	@sudo docker volume rm srcs_wordpress_data srcs_mariadb_data 2>/dev/null || true
 
 up:
 	@echo "Starting $(NAME)..."
 	@cd srcs && docker-compose up -d --build
 
+# Add detached mode to run in the background
+# -d option does this job
+
 logs:
 	@echo "Showing logs..."
 	@cd srcs && docker-compose logs -f
+
+# Add new rebuild command
+rebuild: clean_volumes prepare up
 
 down:
 	@echo "Stopping $(NAME)..."
 	@cd srcs && docker-compose down
 
+# Fix the clean target - by adding sudo
 clean:
 	@echo "Cleaning $(NAME)..."
-	@cd srcs && docker-compose down -v || true
-	@docker system prune -a --force || true
+	@cd srcs && sudo docker-compose down -v || true
+	@sudo docker system prune -a --force || true
+	@sudo rm -rf $(DATA_PATH)/wordpress/* || true
+	@sudo rm -rf $(DATA_PATH)/mariadb/* || true
 
+# Fix the fclean target - by adding sudo
 fclean: clean
 	@echo "Full cleaning..."
-	@docker volume rm $$(docker volume ls -q) 2>/dev/null || true
-	@docker network rm $$(docker network ls -q) 2>/dev/null || true
-	@docker system prune --volumes --all --force || true
+	@sudo docker volume rm $$(sudo docker volume ls -q) 2>/dev/null || true
+	@sudo docker network rm $$(sudo docker network ls -q) 2>/dev/null || true
+	@sudo docker system prune --volumes --all --force || true
 
+# Fix the re target - completely clean and restart
 re: fclean all
 
-restart: down up
-
-rebuild: down up
-
+# Debug target for troubleshooting - adding sudo
 debug:
 	@echo "=== Docker Containers ==="
-	@docker ps -a
+	@sudo docker ps -a
 	@echo "=== Docker Networks ==="
-	@docker network ls
+	@sudo docker network ls
 	@echo "=== Docker Volumes ==="
-	@docker volume ls
+	@sudo docker volume ls
 
-.PHONY: all hosts up logs down clean fclean re restart rebuild debug
+.PHONY: all prepare up down clean clean_volumes fclean re rebuild logs debug
