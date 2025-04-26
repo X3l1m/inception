@@ -1,61 +1,39 @@
 NAME = inception
-CURRENT_DIR := $(shell pwd)
-DATA_PATH := $(CURRENT_DIR)/srcs/data
+SRCS = ./srcs
+COMPOSE = $(SRCS)/docker-compose.yml
+DATA_DIR = ./data
 
-all: prepare up
+all: setup $(NAME)
 
-prepare:
-	@mkdir -p $(DATA_PATH)/wordpress
-	@mkdir -p $(DATA_PATH)/mariadb
-	@sudo echo "127.0.0.1 seyildir.42.fr" >> /etc/hosts || true
+$(NAME):
+	docker-compose -f $(COMPOSE) up --build
 
-clean_volumes:
-	@echo "Cleaning volumes..."
-	@sudo docker volume rm srcs_wordpress_data srcs_mariadb_data 2>/dev/null || true
-
-up:
-	@echo "Starting $(NAME)..."
-	@cd srcs && docker-compose up -d --build
-
-# Add detached mode to run in the background
-# -d option does this job
-
-logs:
-	@echo "Showing logs..."
-	@cd srcs && docker-compose logs -f
-
-# Add new rebuild command
-rebuild: clean_volumes prepare up
+setup:
+	@mkdir -p $(DATA_DIR)/wordpress
+	@mkdir -p $(DATA_DIR)/mariadb
+	@sudo chmod 777 $(DATA_DIR)/wordpress
+	@sudo chmod 777 $(DATA_DIR)/mariadb
+	@if ! grep -q "seyildir.42.fr" /etc/hosts; then \
+		echo "127.0.0.1 seyildir.42.fr" | sudo tee -a /etc/hosts; \
+		echo "Host added to /etc/hosts"; \
+	fi
+	@echo "Data directories created and permissions set"
 
 down:
-	@echo "Stopping $(NAME)..."
-	@cd srcs && docker-compose down
+	docker-compose -f $(COMPOSE) down
+	
 
-# Fix the clean target - by adding sudo
+logs:
+	docker-compose -f $(COMPOSE) logs
+
 clean:
-	@echo "Cleaning $(NAME)..."
-	@cd srcs && sudo docker-compose down -v || true
-	@sudo docker system prune -a --force || true
-	@sudo rm -rf $(DATA_PATH)/wordpress/* || true
-	@sudo rm -rf $(DATA_PATH)/mariadb/* || true
+	docker-compose -f $(COMPOSE) down
 
-# Fix the fclean target - by adding sudo
 fclean: clean
-	@echo "Full cleaning..."
-	@sudo docker volume rm $$(sudo docker volume ls -q) 2>/dev/null || true
-	@sudo docker network rm $$(sudo docker network ls -q) 2>/dev/null || true
-	@sudo docker system prune --volumes --all --force || true
+	docker system prune -af
+	sudo rm -rf $(DATA_DIR)
+	docker volume prune -f
 
-# Fix the re target - completely clean and restart
 re: fclean all
 
-# Debug target for troubleshooting - adding sudo
-debug:
-	@echo "=== Docker Containers ==="
-	@sudo docker ps -a
-	@echo "=== Docker Networks ==="
-	@sudo docker network ls
-	@echo "=== Docker Volumes ==="
-	@sudo docker volume ls
-
-.PHONY: all prepare up down clean clean_volumes fclean re rebuild logs debug
+.PHONY: all setup clean fclean re $(NAME)
