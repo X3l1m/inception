@@ -10,7 +10,7 @@ services:
       - wordpress_data:/var/www/html
     depends_on:
       - wordpress
-    #restart: always
+    restart: always
     networks:
       - inception_network
 
@@ -21,7 +21,7 @@ services:
       - wordpress_data:/var/www/html
     depends_on:
       - mariadb
-    #restart: always
+    restart: always
     environment:
       - MYSQL_DATABASE=${MYSQL_DATABASE}
       - MYSQL_USER=${MYSQL_USER}
@@ -42,7 +42,7 @@ services:
     build: ./requirements/mariadb
     volumes:
       - mariadb_data:/var/lib/mysql
-    #restart: always
+    restart: always
     environment:
       - MYSQL_DATABASE=${MYSQL_DATABASE}
       - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
