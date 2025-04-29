@@ -6,7 +6,7 @@ DATA_DIR = ./data
 all: setup $(NAME)
 
 $(NAME):
-	docker-compose -f $(COMPOSE) up --build
+	docker-compose -f $(COMPOSE) up --build -d
 
 setup:
 	@mkdir -p $(DATA_DIR)/wordpress
@@ -29,6 +29,13 @@ logs:
 clean:
 	docker-compose -f $(COMPOSE) down
 
+eval:
+	@docker stop $$(docker ps -qa) 2>/dev/null || true
+	@docker rm $$(docker ps -qa) 2>/dev/null || true
+	@docker rmi -f $$(docker images -qa) 2>/dev/null || true
+	@docker volume rm $$(docker volume ls -q) 2>/dev/null || true
+	@docker network rm $$(docker network ls -q) 2>/dev/null || true
+
 fclean: clean
 	docker system prune -af
 	sudo rm -rf $(DATA_DIR)
@@ -36,4 +43,4 @@ fclean: clean
 
 re: fclean all
 
-.PHONY: all setup clean fclean re $(NAME)
+.PHONY: all setup clean fclean re $(NAME) eval
