@@ -10,11 +10,7 @@ then
         echo "Inception : ${MYSQL_DATABASE} database is being created."
         service mariadb start
 
-        # MariaDB'nin hazır olmasını bekle
-        while ! mysqladmin ping --silent; do
-            echo "Waiting for MariaDB to be ready..."
-            sleep 2
-        done
+		sleep 3
 
         mysql -e "CREATE DATABASE IF NOT EXISTS ${MYSQL_DATABASE};"
         mysql -e "CREATE USER IF NOT EXISTS '${MYSQL_USER}'@'%' IDENTIFIED BY '${MYSQL_PASSWORD}';"

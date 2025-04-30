@@ -24,7 +24,7 @@ down:
 	
 
 logs:
-	docker-compose -f $(COMPOSE) logs
+	docker-compose -f $(COMPOSE) logs -f
 
 clean:
 	docker-compose -f $(COMPOSE) down
