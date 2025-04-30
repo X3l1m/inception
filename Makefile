@@ -1,7 +1,7 @@
 NAME = inception
 SRCS = ./srcs
 COMPOSE = $(SRCS)/docker-compose.yml
-DATA_DIR = ./data
+DATA_DIR = /home/seyildir/data
 
 all: setup $(NAME)
 
