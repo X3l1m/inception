@@ -22,6 +22,11 @@ setup:
 down:
 	docker-compose -f $(COMPOSE) down
 	
+stop:
+	docker-compose -f $(COMPOSE) stop
+
+start:
+	docker-compose -f $(COMPOSE) start
 
 logs:
 	docker-compose -f $(COMPOSE) logs -f
